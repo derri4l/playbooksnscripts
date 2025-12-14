@@ -2,6 +2,7 @@
 - name: Proxmox Updates
   hosts: proxmox
   become: yes
+  gather_facts: yes
 
   tasks:
     - name: Update Proxmox packages
@@ -10,3 +11,6 @@
         upgrade: dist
         autoremove: yes
         autoclean: yes
+    - name: Show OS and kernel
+      debug:
+        msg: "{{ inventory_hostname }} → {{ ansible_distribution }} {{ ansible_distribution_version }} ({{ ansible_kernel }})"
