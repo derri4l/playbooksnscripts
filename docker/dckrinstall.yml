@@ -1,0 +1,66 @@
+--- 
+- name: Install docker
+  hosts: docker
+  become: yes
+  gather_facts: yes
+
+  tasks: 
+    - name: Update the VM
+      apt: 
+        update_cache: yes
+        upgrade: dist 
+        autoremove: yes
+        autoclean: yes
+    
+# Install necessary packages
+    - name: Install packages
+      package:
+        name: "{{item}}"
+        state: present 
+      loop:
+        - ufw
+        - curl
+        - nano
+        - python3-pip
+        - net-utils
+
+# Start and configure the firewall        
+    - name: Start UFW
+      service: 
+        name: ufw
+        state: started
+        enabled: yes
+
+    - name: Allow UFW Ports
+      command: "ufw allow {{item}}"
+      loop:
+        - 22
+        - 433
+        - 80
+        - 9443
+        - 9000
+
+    - name: Configure UFW
+      command: ufw default deny incoming
+    
+    - name: Allow UFW Outgoing
+      command: ufw --force enabled
+    
+# Install and start docker.io
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Start docker 
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+  
+    
+
+
+
+
