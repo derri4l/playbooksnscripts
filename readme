@@ -1,0 +1,13 @@
+# Ansible Playbooks
+
+A collection of Ansible playbooks I use for automation & provisioning.
+
+## Available Playbooks
+
+```
+ansiblecollections/
+├── docker/
+│   └── dckrinstall.yml - Installs and configures Docker with UFW firewall and Portainer container 
+└── proxmox_updates/
+    └── updatehosts.yml - Application update and deployment playbook
+```
