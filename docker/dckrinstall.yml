@@ -38,7 +38,7 @@
         - 22
         - 433
         - 80
-        - 9443 #port for portainer
+        - 9443 
         - 9000 #portainer
 
     - name: Configure UFW
