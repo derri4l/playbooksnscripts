@@ -1,3 +1,29 @@
+# gitshove
+# --------
+# A much faster way to merge into main safely for anyone that works primarily on dev.
+#
+# Workflow:
+#   1. Ensures working tree is clean
+#   2. Ensures you are on 'dev'
+#   3. Pulls + pushes dev
+#   4. Switches to main and updates it
+#   5. Prompts for confirmation
+#   6. Merges dev -> main
+#   7. Pushes main
+#   8. Returns to dev
+#
+# Stops immediately on:
+#   - Uncommitted changes
+#   - Merge conflicts
+#   - Any command failure
+#
+# Install as git alias:
+#   git config --global alias.shove "!bash $HOME/scripts/gitshove.sh"
+#
+# Usage:
+#   git shove
+
+
 #!/usr/bin/env bash
 GREEN="\033[1;32m"
 RED="\033[1;31m"
@@ -50,8 +76,17 @@ if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
   exit 1
 fi
 
-echo "Merging $CURRENT_BRANCH into main..."
-git merge dev --no-edit
+# Merge dev into main (fast-forward only)
+echo -e "\n${YELLOW}=== Merging dev into main ===${NC}"
+
+if ! git merge dev --ff-only --no-edit; then
+  echo "Fast-forward merge failed."
+  echo "main has diverged from dev."
+  echo "Rebase dev onto main first:"
+  echo "  git checkout dev"
+  echo "  git pull origin main --rebase"
+  exit 1
+fi
 
 echo "Pushing main..."
 git push origin main
@@ -60,3 +95,5 @@ echo "Switching back to $CURRENT_BRANCH..."
 git checkout "$CURRENT_BRANCH"
 
 echo -e "${GREEN}Done.${NC}"
+
+
