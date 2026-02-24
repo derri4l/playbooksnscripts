@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+GREEN="\033[1;32m"
+RED="\033[1;31m"
+YELLOW="\033[1;33m"
+BLUE="\033[1;34m"
+NC="\033[0m"
 
 set -euo pipefail
 
@@ -21,14 +26,15 @@ if [[ "$CURRENT_BRANCH" == "main" ]]; then
   exit 1
 fi
 
-echo "Current branch: $CURRENT_BRANCH"
+echo -e "${BLUE}Current branch: $CURRENT_BRANCH${NC}"
 
-echo "Pulling latest on $CURRENT_BRANCH..."
+echo -e "${BLUE}Pulling latest on $CURRENT_BRANCH...${NC}"
 git pull origin "$CURRENT_BRANCH"
 
-echo "Pushing $CURRENT_BRANCH..."
+echo -e "${YELLOW}Pushing $CURRENT_BRANCH...${NC}"
 git push origin "$CURRENT_BRANCH"
 
+echo -e "\n${YELLOW}=== Syncing dev branch ===${NC}"
 echo "Switching to main..."
 git checkout main
 
@@ -39,13 +45,13 @@ git pull origin main
 read -p "Merge dev into main and push? (y/N): " CONFIRM
 
 if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
-  echo "Aborted."
-  git checkout dev
+  echo -e "${RED}Aborted.${NC}"
+  git checkout "$CURRENT_BRANCH"
   exit 1
 fi
 
 echo "Merging $CURRENT_BRANCH into main..."
-git merge "$CURRENT_BRANCH"
+git merge dev --no-edit
 
 echo "Pushing main..."
 git push origin main
@@ -53,4 +59,4 @@ git push origin main
 echo "Switching back to $CURRENT_BRANCH..."
 git checkout "$CURRENT_BRANCH"
 
-echo "Done."
+echo -e "${GREEN}Done.${NC}"
