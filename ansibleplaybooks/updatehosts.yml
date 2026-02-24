@@ -1,4 +1,5 @@
----
+# This Ansible playbook updates Proxmox hosts by upgrading packages and cleaning up unnecessary files. It also displays the OS and kernel information for each host.
+
 - name: Proxmox Updates
   hosts: proxmox
   become: yes

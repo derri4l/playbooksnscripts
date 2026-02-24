@@ -4,7 +4,7 @@ set -euo pipefail
 
 # Ensure we're inside a git repo
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
-  echo "Not here buddy"
+  echo "No git in here buddy"
   exit 1
 }
 
@@ -34,6 +34,15 @@ git checkout main
 
 echo "Pulling latest main..."
 git pull origin main
+
+#confirmation before merging
+read -p "Merge dev into main and push? (y/N): " CONFIRM
+
+if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+  echo "Aborted."
+  git checkout dev
+  exit 1
+fi
 
 echo "Merging $CURRENT_BRANCH into main..."
 git merge "$CURRENT_BRANCH"
