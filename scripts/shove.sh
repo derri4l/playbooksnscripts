@@ -1,3 +1,10 @@
+# This is a helper script to merge dev into main with some safety checks and prompts.
+# Removes  the friction of manually checking out, syncing, merging, and pushing between branches.
+# Shows commit and diff summary before merging.
+
+# Install: git config --global alias.shove "!bash $HOME/scripts/gitshove.sh"
+# Run:     git shove
+
 #!/usr/bin/env bash
 
 GREEN="\033[1;32m"
@@ -10,7 +17,7 @@ set -euo pipefail
 
 # Ensure inside git repo
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
-  echo -e "${RED}Have you tried turning your repository off and on again?${NC}"
+  echo -e "${RED}Not a git repo...${NC}"
   exit 1
 }
 
@@ -71,6 +78,7 @@ fi
 
 echo -e "${BLUE}→ Fast-forward merging dev → main${NC}"
 
+# Attempt fast-forward merge
 if ! git merge dev --ff-only --no-edit >/dev/null; then
   echo -e "${RED}Fast-forward merge failed.${NC}"
   echo "Rebase dev onto main:"
@@ -80,6 +88,7 @@ if ! git merge dev --ff-only --no-edit >/dev/null; then
   exit 1
 fi
 
+# Push main
 echo -e "${BLUE}→ Pushing main${NC}"
 git push origin main --quiet
 
