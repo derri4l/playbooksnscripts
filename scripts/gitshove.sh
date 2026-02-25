@@ -33,67 +33,77 @@ NC="\033[0m"
 
 set -euo pipefail
 
-# Ensure we're inside a git repo
+# Ensure were inside a git repo
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
-  echo "No git in here buddy"
+  echo -e "${RED}Have you tried turning your repository off and on again?.${NC}"
   exit 1
 }
 
 # Ensure clean working tree
 if [[ -n "$(git status --porcelain)" ]]; then
-  echo "Working tree not clean."
+  echo "This tree needs pruning... run 'git status'"
   exit 1
 fi
 
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-if [[ "$CURRENT_BRANCH" == "main" ]]; then
-  echo "You must be on dev to run gitshove."
-  exit 1
-fi
-
-echo -e "${BLUE}Current branch: $CURRENT_BRANCH${NC}"
-
-echo -e "${BLUE}Pulling latest on $CURRENT_BRANCH...${NC}"
-git pull origin "$CURRENT_BRANCH"
-
-echo -e "${YELLOW}Pushing $CURRENT_BRANCH...${NC}"
-git push origin "$CURRENT_BRANCH"
-
-echo -e "\n${YELLOW}=== Syncing dev branch ===${NC}"
-echo "Switching to main..."
-git checkout main
-
-echo "Pulling latest main..."
-git pull origin main
-
-#confirmation before merging
-read -p "Merge dev into main and push? (y/N): " CONFIRM
-
-if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+#Enforce dev workflow
+if [[ "$CURRENT_BRANCH" != "dev" ]]; then
+echo -e "${YELLOW}You are on '$CURRENT_BRANCH' branch.${NC}"
+read -p "Swicth to 'dev' and continue? (y/N): " SWITCH
+if [[ "$SWITCH" != "y" && "$SWITCH" != "Y" ]]; then
   echo -e "${RED}Aborted.${NC}"
-  git checkout "$CURRENT_BRANCH"
   exit 1
 fi
+git checkout dev
 
-# Merge dev into main (fast-forward only)
-echo -e "\n${YELLOW}=== Merging dev into main ===${NC}"
+# Sync dev first 
+echo -e "${BLUE}→ Syncing dev${NC}"
+git pull origin dev --quiet
+git push origin dev --quiet
 
-if ! git merge dev --ff-only --no-edit; then
-  echo "Fast-forward merge failed."
-  echo "main has diverged from dev."
-  echo "Rebase dev onto main first:"
-  echo "  git checkout dev"
-  echo "  git pull origin main --rebase"
-  exit 1
+# Sync main
+echo -e "${BLUE}→ Switching to main${NC}"
+git checkout main >/dev/null
+git pull origin main --quiet
+
+# check for merge conflicts
+if [[-z "$(git log main..dev --oneline)"]]; then
+  echo -e "{GREEN}Main is up to date!${NC}"
+  git checkout dev >/dev/null
+  exit 0
 fi
 
-echo "Pushing main..."
-git push origin main
+# Show summary of changes to be merged
+echo -e "\n${YELLOW}Commits to be merged:${NC}"
+git log main..dev --oneline
 
-echo "Switching back to $CURRENT_BRANCH..."
-git checkout "$CURRENT_BRANCH"
+echo -e "\n${YELLOW}Change summary:${NC}"
+git diff --stat main..dev --no-merges
 
-echo -e "${GREEN}Done.${NC}"
+echo ""
+read -p "Merge dev into main? (y/N): " CONFIRM
+if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+  echo -e "${RED}Merge confidence level: insufficient.${NC}"
+  git checkout dev >/dev/null
+  exit 1
+fi  
+
+echo -e "${BLUE} Fast forward merging dev → main${NC}"
+
+if ! git merge --ff-only --no-edit >/dev/null; then
+  echo -e "${RED}Fast forward merge failed.${NC}"
+  echo -e " Please resolve merge conflicts manually, main has trust issues.${NC}"
+  git checkout dev >/dev/null
+  exit 1
+fi  
+
+echo -e "${BLUE}Pushing main${NC}"
+git push origin main --quiet
+
+git checkout dev >/dev/null
+echo -e "${GREEN}Merge complete!${NC}"
+
+
 
 
