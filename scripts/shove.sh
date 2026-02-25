@@ -54,7 +54,7 @@ git pull origin main --quiet
 
 # Check if anything to merge
 if [[ -z "$(git log main..dev --oneline)" ]]; then
-  echo -e "${GREEN}Main is already up to date.${NC}"
+  echo -e "${GREEN}✔ Main is already up to date.${NC}"
   git checkout dev >/dev/null
   exit 0
 fi
